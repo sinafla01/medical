@@ -20,7 +20,7 @@ logging:
 
 # swagger
 springdoc:
-  packages-to-scan: com.study.session
+  packages-to-scan: com.backend.medical.api.controller
   default-consumes-media-type: application/json;charset=UTF-8
   default-produces-media-type: application/json;charset=UTF-8
   swagger-ui:
