@@ -15,6 +15,9 @@ public interface PatientService {
     // 환자정보 1건 조회
     PatientInfoDto findByPatient(long patientId);
 
+    // 이름, 생년월일, 환자코드 조건에 따라 조회
+    List<PatientDto> findPatientByTerms(String name, String birthday, String patientCode);
+
     // 환자정보 등록
     void save(PatientDto patientDto) throws ExistValidException;
 

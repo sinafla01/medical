@@ -4,13 +4,11 @@ import com.backend.medical.api.dto.PatientInfoDto;
 import com.backend.medical.api.repository.HospitalRepository;
 import com.backend.medical.api.repository.PatientRepository;
 import com.backend.medical.api.dto.PatientDto;
-import com.backend.medical.api.repository.VisitRepository;
 import com.backend.medical.common.ResultMsg;
 import com.backend.medical.common.exception.ExistValidException;
 import com.backend.medical.common.exception.NotFoundValidException;
 import com.backend.medical.entity.Hospital;
 import com.backend.medical.entity.Patient;
-import com.backend.medical.entity.Visit;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,10 +29,10 @@ public class PatientServiceImpl implements PatientService {
 
     private final PatientRepository patientRepository;
     private final HospitalRepository hospitalRepository;
-    private final VisitRepository visitRepository;
 
     // 환자목록 조회
     @Override
+    @Transactional
     public List<PatientDto> findAll() {
         log.info("[{}]: findAll()", this.getClass().getName());
         // 환자목록 조회
@@ -51,12 +49,31 @@ public class PatientServiceImpl implements PatientService {
 
     // 환자정보 1건 조회
     @Override
+    @Transactional
     public PatientInfoDto findByPatient(long patientId) {
         log.info("[{}]: findByPatient()", this.getClass().getName());
         // 환자정보 조회
         Patient patient = patientRepository.findById(patientId)
                 .orElseThrow(() -> new IllegalArgumentException(ResultMsg.NOT_PATIENT));
         return new PatientInfoDto(patient, patient.getVisits());
+    }
+
+    // 이름, 생년월일, 환자코드 조건에 따라 조회
+    @Override
+    @Transactional
+    public List<PatientDto> findPatientByTerms(String name, String birthday, String patientCode) {
+        log.info("[{}]: findPatientByTerms", this.getClass().getName());
+        log.info("name: {}, birthday: {}, patientCode: {}", name, birthday, patientCode);
+        // 환자 목록 조회
+        List<PatientDto> patientList = patientRepository.findPatientByTerms(name, birthday, patientCode);
+
+        if(patientList.isEmpty()) {
+            // 환자정보가 없는 경우 예외처리
+            throw new NotFoundValidException(HttpStatus.NOT_FOUND, ResultMsg.NOT_FOUND);
+        } else {
+            // 환자정보가 있는 경우
+            return patientList;
+        }
     }
 
     // 환자정보 저장

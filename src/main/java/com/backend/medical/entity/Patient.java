@@ -1,6 +1,5 @@
 package com.backend.medical.entity;
 
-import com.backend.medical.api.dto.PatientDto;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,7 +16,7 @@ public class Patient {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "patient_id", unique = true)
-    private long id;
+    private Long id;
 
     // 병원 ID
     @ManyToOne(targetEntity = Hospital.class, fetch = FetchType.EAGER)
@@ -53,7 +52,8 @@ public class Patient {
     private List<Visit> visits = new ArrayList<Visit>();
 
     @Builder
-    public Patient(String name, String genderCode, String patientUuid, String birthday, String phoneNumber, Hospital hospital) {
+    public Patient(Long id, String name, String genderCode, String patientUuid, String birthday, String phoneNumber, Hospital hospital) {
+        this.id = id;
         this.name = name;
         this.genderCode = genderCode;
         this.patientUuid = patientUuid;

@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface PatientRepository extends JpaRepository<Patient, Long> {
+public interface PatientRepository extends JpaRepository<Patient, Long>, PatientCustom {
 
     // 이름과 성별로 환자 조회
     Optional<Patient> findByNameAndGenderCode(String name, String genderCode);

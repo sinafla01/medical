@@ -1,6 +1,7 @@
 package com.backend.medical.api.controller;
 
 import com.backend.medical.api.dto.PatientInfoDto;
+import com.backend.medical.api.dto.PatientTermsDto;
 import com.backend.medical.api.service.PatientService;
 import com.backend.medical.api.dto.PatientDto;
 import com.backend.medical.common.ResultMsg;
@@ -25,7 +26,7 @@ public class PatientController {
     @GetMapping("/all")
     public BaseResponse<List<PatientDto>> findAll() {
         List<PatientDto> patients = patientService.findAll();
-        return new BaseResponse<>(HttpStatus.OK.value(), patients,ResultMsg.SUCCESS_FIND_ALL);
+        return new BaseResponse<>(HttpStatus.OK.value(), patients, ResultMsg.SUCCESS_FIND_ALL);
     }
 
     @Operation(summary = "환자정보 1건 조회", description = "환자 정보 1건을 조회한다.")
@@ -33,6 +34,13 @@ public class PatientController {
     public BaseResponse<PatientInfoDto> findByPatient(@PathVariable long patientId) {
         PatientInfoDto patientInfoDto = patientService.findByPatient(patientId);
         return new BaseResponse<>(HttpStatus.OK.value(), patientInfoDto, ResultMsg.SUCCESS_FIND);
+    }
+
+    @Operation(summary = "검색 조건에 따라 환자목록 조회", description = "환자이름, 생년월일, 환자등록번호로 검색한다.")
+    @GetMapping("/find")
+    public BaseResponse<List<PatientDto>> findPatientByTerms(PatientTermsDto termsDto) {
+        List<PatientDto> patients = patientService.findPatientByTerms(termsDto.getName(), termsDto.getBirthday(), termsDto.getPatientCode());
+        return new BaseResponse<>(HttpStatus.OK.value(), patients, ResultMsg.SUCCESS_FIND_ALL);
     }
 
     @Operation(summary = "환자정보 등록", description = "회원정보를 등록한다.")

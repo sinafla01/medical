@@ -25,6 +25,7 @@ public class PatientDto {
     private String phoneNumber; // 휴대폰 전화번호
 
     public PatientDto (Patient patient) {
+        this.name = patient.getName();
         this.patientId = patient.getId();
         this.hospitalId = patient.getHospital().getId();
         this.birthday = patient.getBirthday();
