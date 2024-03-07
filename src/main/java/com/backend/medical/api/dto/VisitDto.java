@@ -29,12 +29,6 @@ public class VisitDto {
                 .build();
     }
 
-    public VisitDto(long hospitalId, long patientId, String visitCode) {
-        this.hospitalId = hospitalId;
-        this.patientId = patientId;
-        this.visitCode = visitCode;
-    }
-
     @Override
     public String toString() {
         return "VisitDto{" +

@@ -23,13 +23,10 @@ public class VisitServiceImpl implements VisitService {
     private final PatientRepository patientRepository;
     private final VisitRepository visitRepository;
 
-    private long VISIT_ID = 1L;
-
     // 방문 등록
     @Override
     @Transactional
-    public void save(VisitDto visitDto) {
-        log.info("data: {}", visitDto.toString());
+    public Visit save(VisitDto visitDto) {
         log.info("[{}] : save()", this.getClass().getName());
         // 병원정보 조회
         Hospital hospital = hospitalRepository.findById(visitDto.getHospitalId())
@@ -39,20 +36,20 @@ public class VisitServiceImpl implements VisitService {
                 .orElseThrow(() -> new IllegalArgumentException(ResultMsg.NOT_PATIENT));
         LocalDateTime now = LocalDateTime.now();
         // 방문정보 저장
-        visitRepository.save(visitDto.toEntity(hospital, patient, now, now));
+        return visitRepository.save(visitDto.toEntity(hospital, patient, now, now));
     }
 
     // 방문정보 수정
     @Override
     @Transactional
-    public void update(VisitDto visitDto) {
+    public Visit update(VisitDto visitDto) {
         log.info("[{}] : update()", this.getClass().getName());
         // 방문정보 조회
         Visit visit = visitRepository.findById(visitDto.getVisitId())
                 .orElseThrow(() -> new IllegalArgumentException(ResultMsg.NOT_VISIT));
-        visit.update("2", LocalDateTime.now());
+        visit.update("2", LocalDateTime.now()); // TODO: 하드코딩된 부분 수정
         // 방문정보 수정
-        visitRepository.save(visit);
+        return visitRepository.save(visit);
     }
 
     // 방문정보 삭제

@@ -9,6 +9,7 @@ import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class PatientRepositoryImpl implements PatientCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<PatientDto> findPatientByTerms(String name, String birthday, String patientCode) {
+    public List<PatientDto> findPatientByTerms(String name, String birthday, String patientCode, Pageable pageable) {
         QPatient pa = QPatient.patient;
 
         JPAQuery<Tuple> query = queryFactory.select(
@@ -30,7 +31,9 @@ public class PatientRepositoryImpl implements PatientCustom {
                         pa.birthday,
                         pa.phoneNumber
                 ).from(pa)
-                .where(nameEq(pa, name), (birthdayEq(pa, birthday)), (patientCodeEq(pa, patientCode)));
+                .where(nameEq(pa, name), (birthdayEq(pa, birthday)), (patientCodeEq(pa, patientCode)))
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize());
 
         // query 결과를 patient 객체로 변환
         List<Patient> patients = query.fetch().stream().map(tuple -> Patient.builder()
@@ -47,6 +50,7 @@ public class PatientRepositoryImpl implements PatientCustom {
         return patients.stream().map(PatientDto::new).toList();
     }
 
+    // 이름 null 체크
     private BooleanBuilder nameEq(QPatient pa, String name) {
         if (name == null) {
             return new BooleanBuilder();
@@ -55,6 +59,7 @@ public class PatientRepositoryImpl implements PatientCustom {
         }
     }
 
+    // 생년월일 null 체크
     private BooleanBuilder birthdayEq(QPatient pa, String birthday) {
         if (birthday == null) {
             return new BooleanBuilder();
@@ -63,6 +68,7 @@ public class PatientRepositoryImpl implements PatientCustom {
         }
     }
 
+    // 환자코드 null 체크
     private BooleanBuilder patientCodeEq(QPatient pa, String patientCode) {
         if(patientCode == null) {
             return new BooleanBuilder();

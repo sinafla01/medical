@@ -13,4 +13,8 @@ public class ResultMsg {
     public static String SUCCESS_SAVE = "정상적으로 저장되었습니다.";
     public static String SUCCESS_UPDATE = "정상적으로 수정되었습니다.";
     public static String SUCCESS_DELETE = "정상적으로 삭제되었습니다.";
+
+    public static String FAIL_SAVE = "저장에 실패했습니다.";
+    public static String FAIL_UPDATE = "수정에 실패했습니다.";
+    public static String NOT_VALID_PATTERN = "형식을 확인해주세요.";
 }

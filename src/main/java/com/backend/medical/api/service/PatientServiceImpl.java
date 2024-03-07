@@ -1,10 +1,13 @@
 package com.backend.medical.api.service;
 
 import com.backend.medical.api.dto.PatientInfoDto;
+import com.backend.medical.api.dto.PatientSaveDto;
+import com.backend.medical.api.dto.PatientTermsDto;
 import com.backend.medical.api.repository.HospitalRepository;
 import com.backend.medical.api.repository.PatientRepository;
 import com.backend.medical.api.dto.PatientDto;
 import com.backend.medical.common.ResultMsg;
+import com.backend.medical.common.Util;
 import com.backend.medical.common.exception.ExistValidException;
 import com.backend.medical.common.exception.NotFoundValidException;
 import com.backend.medical.entity.Hospital;
@@ -12,6 +15,9 @@ import com.backend.medical.entity.Patient;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -33,12 +39,13 @@ public class PatientServiceImpl implements PatientService {
     // 환자목록 조회
     @Override
     @Transactional
-    public List<PatientDto> findAll() {
+    public List<PatientDto> findAll(int pageNo, int pageSize) {
         log.info("[{}]: findAll()", this.getClass().getName());
         // 환자목록 조회
-        List<Patient> patients = patientRepository.findByHospitalId(HOSPITAL_ID);
+        Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
+        Slice<Patient> patients = patientRepository.findSliceByHospitalId(HOSPITAL_ID, pageable);
 
-        if(patients.isEmpty()) {
+        if (patients.isEmpty()) {
             // 환자정보가 없는 경우 예외처리
             throw new NotFoundValidException(HttpStatus.NOT_FOUND, ResultMsg.NOT_FOUND);
         } else {
@@ -61,13 +68,17 @@ public class PatientServiceImpl implements PatientService {
     // 이름, 생년월일, 환자코드 조건에 따라 조회
     @Override
     @Transactional
-    public List<PatientDto> findPatientByTerms(String name, String birthday, String patientCode) {
+    public List<PatientDto> findPatientByTerms(PatientTermsDto termsDto) {
         log.info("[{}]: findPatientByTerms", this.getClass().getName());
-        log.info("name: {}, birthday: {}, patientCode: {}", name, birthday, patientCode);
+        // 유효성 검사
+        if (!Util.isBirthdayValidation(termsDto.getBirthday())) {
+            throw new IllegalStateException(ResultMsg.NOT_VALID_PATTERN + "(예: 2000-01-01)");
+        }
         // 환자 목록 조회
-        List<PatientDto> patientList = patientRepository.findPatientByTerms(name, birthday, patientCode);
+        Pageable pageable = PageRequest.of(termsDto.getPageNo() - 1, termsDto.getPageSize());
+        List<PatientDto> patientList = patientRepository.findPatientByTerms(termsDto.getName(), termsDto.getBirthday(), termsDto.getPatientCode(), pageable);
 
-        if(patientList.isEmpty()) {
+        if (patientList.isEmpty()) {
             // 환자정보가 없는 경우 예외처리
             throw new NotFoundValidException(HttpStatus.NOT_FOUND, ResultMsg.NOT_FOUND);
         } else {
@@ -79,9 +90,11 @@ public class PatientServiceImpl implements PatientService {
     // 환자정보 저장
     @Override
     @Transactional
-    public void save(PatientDto patientDto) throws ExistValidException {
+    public Patient save(PatientSaveDto patientDto) throws ExistValidException {
         log.info("[{}]: save()", this.getClass().getName());
-        String genderCode = patientDto.getGender().equals("남") ? "M" : "F"; // 공통 변수로 묶기
+        // 유효성 검사
+        validation(patientDto.getBirthday(), patientDto.getPhoneNumber());
+        String genderCode = Util.getGenderCode(patientDto.getGender());
         // 환자정보 조회
         Optional<Patient> patient = patientRepository.findByNameAndGenderCode(patientDto.getName(), genderCode);
 
@@ -93,7 +106,7 @@ public class PatientServiceImpl implements PatientService {
             // 병원정보 조회
             Hospital hospital = hospitalRepository.findById(HOSPITAL_ID)
                     .orElseThrow(() -> new IllegalArgumentException(ResultMsg.NOT_HOSPITAL));
-            patientRepository.save(
+            return patientRepository.save(
                     Patient.builder()
                             .name(patientDto.getName())
                             .phoneNumber(patientDto.getPhoneNumber())
@@ -102,19 +115,21 @@ public class PatientServiceImpl implements PatientService {
                             .genderCode(genderCode)
                             .hospital(hospital)
                             .build()
-            ); // 환자정보 저장
+            );
         }
     }
 
     // 환자정보 수정
     @Override
-    public void update(PatientDto patientDto) {
+    public Patient update(PatientDto patientDto) {
         log.info("[{}]: update()", this.getClass().getName());
+        // 유효성 검사
+        validation(patientDto.getBirthday(), patientDto.getPhoneNumber());
         // 환자정보 조회
         Patient patient = patientRepository.findById(patientDto.getPatientId())
                 .orElseThrow(() -> new IllegalArgumentException(ResultMsg.NOT_PATIENT));
         patient.update(patientDto.getName(), patientDto.getBirthday(), patientDto.getPhoneNumber()); // 수정
-        patientRepository.save(patient);
+        return patientRepository.save(patient);
     }
 
     // 환자정보 삭제
@@ -134,5 +149,17 @@ public class PatientServiceImpl implements PatientService {
         int year = LocalDate.now().getYear();
         int patientCount = patientRepository.countByHospitalId(HOSPITAL_ID);
         return year + String.format("%06d", patientCount + 1);
+    }
+
+    // 생년월일, 휴대폰번호 패턴검사
+    private void validation(String birthday, String phoneNumber) {
+        // 생년월일 패턴 검사 (에: 2000-01-01)
+        if (birthday != null && !Util.isBirthdayValidation(birthday)) {
+            throw new IllegalArgumentException(ResultMsg.NOT_VALID_PATTERN + "(예: 2000-01-01)");
+        }
+        // 휴대폰 패턴 검사 (예: 010-1111-1111)
+        if (phoneNumber != null && !Util.isPhoneValidation(phoneNumber)) {
+            throw new IllegalArgumentException(ResultMsg.NOT_VALID_PATTERN + "(예: 010-1111-1111)");
+        }
     }
 }

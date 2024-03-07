@@ -1,10 +1,11 @@
 package com.backend.medical.api.repository;
 
 import com.backend.medical.entity.Patient;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,5 +18,5 @@ public interface PatientRepository extends JpaRepository<Patient, Long>, Patient
     int countByHospitalId(long hospitalId);
 
     // 병원 ID로 환자목록 조회
-    List<Patient> findByHospitalId(long hospitalId);
+    Slice<Patient> findSliceByHospitalId(long hospitalId, Pageable pageable);
 }
