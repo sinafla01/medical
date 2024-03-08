@@ -13,7 +13,7 @@ import java.util.List;
 @Service
 public interface PatientService {
     // 환자목록 조회
-    List<PatientDto> findAll(int pageNo, int pageSize);
+    List<PatientDto> findAll(long hospitalId, int pageNo, int pageSize);
 
     // 환자정보 1건 조회
     PatientInfoDto findByPatient(long patientId);

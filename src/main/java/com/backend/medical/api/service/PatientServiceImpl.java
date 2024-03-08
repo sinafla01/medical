@@ -30,20 +30,17 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class PatientServiceImpl implements PatientService {
 
-    // 현재 병원정보를 가지고 올 방법이 없음으로 1L로 하드코딩
-    private final long HOSPITAL_ID = 1L;
-
     private final PatientRepository patientRepository;
     private final HospitalRepository hospitalRepository;
 
     // 환자목록 조회
     @Override
     @Transactional
-    public List<PatientDto> findAll(int pageNo, int pageSize) {
+    public List<PatientDto> findAll(long hospitalId, int pageNo, int pageSize) {
         log.info("[{}]: findAll()", this.getClass().getName());
         // 환자목록 조회
         Pageable pageable = PageRequest.of(pageNo - 1, pageSize);
-        Slice<Patient> patients = patientRepository.findSliceByHospitalId(HOSPITAL_ID, pageable);
+        Slice<Patient> patients = patientRepository.findSliceByHospitalId(hospitalId, pageable);
 
         if (patients.isEmpty()) {
             // 환자정보가 없는 경우 예외처리
@@ -104,14 +101,14 @@ public class PatientServiceImpl implements PatientService {
         } else {
             // 조회된 환자 정보가 없는 경우
             // 병원정보 조회
-            Hospital hospital = hospitalRepository.findById(HOSPITAL_ID)
+            Hospital hospital = hospitalRepository.findById(patientDto.getHospitalId())
                     .orElseThrow(() -> new IllegalArgumentException(ResultMsg.NOT_HOSPITAL));
             return patientRepository.save(
                     Patient.builder()
                             .name(patientDto.getName())
                             .phoneNumber(patientDto.getPhoneNumber())
                             .birthday(patientDto.getBirthday())
-                            .patientUuid(createCode())
+                            .patientUuid(createCode(hospital.getId()))
                             .genderCode(genderCode)
                             .hospital(hospital)
                             .build()
@@ -144,10 +141,10 @@ public class PatientServiceImpl implements PatientService {
 
     // 환자등록번호 생성
     // 환자등록번호 규칙 : 연도 + (병원의 환자 수 + 1) - 예) 2023000001
-    private String createCode() {
+    private String createCode(long hospitalId) {
         log.info("[{}]: createCode()", this.getClass().getName());
         int year = LocalDate.now().getYear();
-        int patientCount = patientRepository.countByHospitalId(HOSPITAL_ID);
+        int patientCount = patientRepository.countByHospitalId(hospitalId);
         return year + String.format("%06d", patientCount + 1);
     }
 
@@ -155,11 +152,11 @@ public class PatientServiceImpl implements PatientService {
     private void validation(String birthday, String phoneNumber) {
         // 생년월일 패턴 검사 (에: 2000-01-01)
         if (birthday != null && !Util.isBirthdayValidation(birthday)) {
-            throw new IllegalArgumentException(ResultMsg.NOT_VALID_PATTERN + "(예: 2000-01-01)");
+            throw new IllegalStateException(ResultMsg.NOT_VALID_PATTERN + "(예: 2000-01-01)");
         }
         // 휴대폰 패턴 검사 (예: 010-1111-1111)
         if (phoneNumber != null && !Util.isPhoneValidation(phoneNumber)) {
-            throw new IllegalArgumentException(ResultMsg.NOT_VALID_PATTERN + "(예: 010-1111-1111)");
+            throw new IllegalStateException(ResultMsg.NOT_VALID_PATTERN + "(예: 010-1111-1111)");
         }
     }
 }

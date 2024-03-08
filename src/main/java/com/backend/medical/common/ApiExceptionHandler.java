@@ -21,25 +21,31 @@ public class ApiExceptionHandler extends RuntimeException {
 
     @ExceptionHandler
     protected BaseResponse<Void> illegalArgumentException(IllegalArgumentException e) {
-        log.error("[illegalArgumentException] : {}", e.getMessage());
+        log.error("[illegalArgumentException]: {}", e.getMessage());
         return new BaseResponse<>(HttpStatus.NOT_FOUND.value(), e.getMessage());
     }
 
     @ExceptionHandler
     protected BaseResponse<Void> notFoundValidException(NotFoundValidException e) {
-        log.error("[notFoundValidException] : {}", e.getMessage());
+        log.error("[notFoundValidException]: {}", e.getMessage());
         return new BaseResponse<>(HttpStatus.NOT_FOUND.value(), e.getMessage());
     }
 
     @ExceptionHandler
     protected BaseResponse<Void> methodArgumentNotValidException(MethodArgumentNotValidException e) {
-        log.error("[methodArgumentNotValidException] : {}", e.getMessage());
+        log.error("[methodArgumentNotValidException]: {}", e.getMessage());
         return new BaseResponse<>(HttpStatus.BAD_REQUEST.value(), e.getMessage());
     }
 
     @ExceptionHandler
     protected BaseResponse<Void> defaultException(Exception e) {
         log.error("[defaultException]: {}", e.getMessage());
+        return new BaseResponse<>(HttpStatus.BAD_REQUEST.value(), e.getMessage());
+    }
+
+    @ExceptionHandler
+    protected  BaseResponse<Void> illegalStateException(IllegalStateException e) {
+        log.error("[IllegalStateException]: {}", e.getMessage());
         return new BaseResponse<>(HttpStatus.BAD_REQUEST.value(), e.getMessage());
     }
 }

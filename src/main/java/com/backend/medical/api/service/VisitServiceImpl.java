@@ -47,7 +47,7 @@ public class VisitServiceImpl implements VisitService {
         // 방문정보 조회
         Visit visit = visitRepository.findById(visitDto.getVisitId())
                 .orElseThrow(() -> new IllegalArgumentException(ResultMsg.NOT_VISIT));
-        visit.update("2", LocalDateTime.now()); // TODO: 하드코딩된 부분 수정
+        visit.update(visitDto.getVisitCode(), LocalDateTime.now());
         // 방문정보 수정
         return visitRepository.save(visit);
     }
